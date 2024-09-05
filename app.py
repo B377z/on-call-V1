@@ -26,9 +26,18 @@ def get_schedule(schedule_id):
 # POST /schedules - Create a new schedule
 @app.route('/schedules', methods=['POST'])
 def create_schedule():
-    data = request.json  # Removed parentheses
+    data = request.json
     if 'name' not in data or 'start_time' not in data or 'end_time' not in data or 'staffId' not in data:
         return jsonify({'error': 'Missing required fields'}), 400
+    
+    # Check if the schedule already exists (based on name, start_time, and staffId)
+    existing_schedule = next((schedule for schedule in schedules if schedule['name'] == data['name'] 
+                              and schedule['start_time'] == data['start_time']
+                              and schedule['staffId'] == data['staffId']), None)
+    
+    if existing_schedule:
+        return jsonify({'error': 'Duplicate schedule'}), 409  # 409 Conflict
+
     new_id = len(schedules) + 1
     schedule = {
         'id': new_id,
@@ -42,6 +51,7 @@ def create_schedule():
     }
     schedules.append(schedule)
     return jsonify(schedule), 201
+
 
 
 # PUT /schedules/<int:id> - Update a schedule
